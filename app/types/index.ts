@@ -3,6 +3,7 @@ export interface Equipment {
   name: string;
   type: 'excavator' | 'truck' | 'drill' | 'loader' | 'other';
   registrationNumber: string;
+  capacity?: number;
   status: 'active' | 'inactive' | 'maintenance';
   owner: string;
   createdAt: string;
@@ -22,20 +23,16 @@ export interface Material {
 }
 
 export interface Activity {
-  _id: string;
-  title: string;
-  type: 'excavation' | 'drilling' | 'transportation' | 'blasting' | 'maintenance' | 'other';
-  equipment?: string;
-  location?: {
-    latitude?: number;
-    longitude?: number;
-    address?: string;
-  };
+  _id?: string;
+  equipment: string;
+  activityType: string;
+  material?: string;
+  truckId?: string;
+  details?: string;
   startTime: string;
   endTime?: string;
-  status: 'planned' | 'in-progress' | 'completed' | 'cancelled';
-  notes?: string;
+  status: 'in-progress' | 'completed';
   createdBy: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }

@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, Image, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { View, Text, Alert, ScrollView, KeyboardAvoidingView, Platform, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import Request from '../lib/request';
 import { useAppStore } from '../store/useAppStore';
 import { APP_NAME } from '../data';
+import { Button, Input } from '../components/ui';
+import { theme } from '../theme';
 
 export default function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const setAuth = useAppStore((state) => state.setAuth);
@@ -39,89 +39,105 @@ export default function Register() {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1 bg-gray-50">
-      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: 24 }}>
-        <View className="items-center mb-8">
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.logoSection}>
           <Image
             source={require('../assets/mine.png')}
-            style={{ width: 100, height: 100 }}
+            style={styles.logoImage}
             resizeMode="contain"
           />
-          <Text className="text-2xl font-bold text-gray-900 mt-3">{APP_NAME}</Text>
-          <Text className="text-sm text-gray-500 mt-1">Create Account</Text>
+          <Text style={styles.appTitle}>Create Account</Text>
+          <Text style={styles.subtitle}>Join {APP_NAME}</Text>
         </View>
 
-        <View className="w-full">
-          <View className="mb-4">
-            <Text className="text-sm font-medium text-gray-700 mb-2">Full Name</Text>
-            <View className="flex-row items-center bg-white border border-gray-300 rounded-lg px-3">
-              <Ionicons name="person-outline" size={20} color="#6b7280" />
-              <TextInput
-                className="flex-1 h-12 px-2 text-base text-gray-900"
-                placeholder="Enter your name"
-                value={name}
-                onChangeText={setName}
-                autoCapitalize="words"
-              />
-            </View>
-          </View>
+        <View style={styles.formContainer}>
+          <Input
+            label="Full Name"
+            placeholder="John Smith"
+            value={name}
+            onChangeText={setName}
+            autoCapitalize="words"
+            icon="person-outline"
+          />
 
-          <View className="mb-4">
-            <Text className="text-sm font-medium text-gray-700 mb-2">Email Address</Text>
-            <View className="flex-row items-center bg-white border border-gray-300 rounded-lg px-3">
-              <Ionicons name="mail-outline" size={20} color="#6b7280" />
-              <TextInput
-                className="flex-1 h-12 px-2 text-base text-gray-900"
-                placeholder="Enter your email"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-              />
-            </View>
-          </View>
+          <Input
+            label="Email"
+            placeholder="operator@mining.com"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            icon="mail-outline"
+          />
 
-          <View className="mb-4">
-            <Text className="text-sm font-medium text-gray-700 mb-2">Password</Text>
-            <View className="flex-row items-center bg-white border border-gray-300 rounded-lg px-3">
-              <Ionicons name="lock-closed-outline" size={20} color="#6b7280" />
-              <TextInput
-                className="flex-1 h-12 px-2 text-base text-gray-900"
-                placeholder="Minimum 8 characters"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoCapitalize="none"
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color="#6b7280" />
-              </TouchableOpacity>
-            </View>
-          </View>
+          <Input
+            label="Password"
+            placeholder="Minimum 8 characters"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            icon="lock-closed-outline"
+          />
 
-          <TouchableOpacity
-            className={`flex-row items-center justify-center h-12 rounded-lg mt-2 mb-6 ${loading ? 'bg-gray-300' : 'bg-blue-600'}`}
+          <Button
+            title="Create Account"
             onPress={handleRegister}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <>
-                <Ionicons name="person-add-outline" size={20} color="white" />
-                <Text className="text-white text-base font-semibold ml-2">Create Account</Text>
-              </>
-            )}
-          </TouchableOpacity>
+            loading={loading}
+            fullWidth
+            size="lg"
+          />
 
-          <TouchableOpacity onPress={() => router.push('/login')}>
-            <Text className="text-center text-sm">
-              <Text className="text-gray-500">Already have an account? </Text>
-              <Text className="text-blue-600 font-semibold">Login</Text>
-            </Text>
-          </TouchableOpacity>
+          <Button
+            title="Already have an account? Sign In"
+            onPress={() => router.push('/login')}
+            variant="ghost"
+            fullWidth
+            size="md"
+          />
         </View>
+
+        <Text style={styles.footer}>Powered by SOLVEO Mining Technologies</Text>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.surface,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: theme.spacing.xl,
+  },
+  logoSection: {
+    alignItems: 'center',
+    marginBottom: theme.spacing.xl * 2,
+  },
+  logoImage: {
+    width: 100,
+    height: 100,
+    marginBottom: theme.spacing.lg,
+  },
+  appTitle: {
+    fontSize: theme.fontSize.xxl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
+  },
+  subtitle: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.textSecondary,
+  },
+  formContainer: {
+    width: '100%',
+  },
+  footer: {
+    textAlign: 'center',
+    fontSize: theme.fontSize.xs,
+    color: theme.colors.textTertiary,
+    marginTop: theme.spacing.xl,
+  },
+});
