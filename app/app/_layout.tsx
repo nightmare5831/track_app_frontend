@@ -1,9 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
 import { useAppStore } from '../store/useAppStore';
 import { theme } from '../theme';
 import '../global.css';
+
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const isAuthenticated = useAppStore((state) => state.isAuthenticated);
@@ -11,9 +15,21 @@ export default function RootLayout() {
   const checkAuth = useAppStore((state) => state.checkAuth);
   const segments = useSegments();
   const router = useRouter();
+  const [appIsReady, setAppIsReady] = useState(false);
 
   useEffect(() => {
-    checkAuth();
+    async function prepare() {
+      try {
+        await checkAuth();
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        setAppIsReady(true);
+        await SplashScreen.hideAsync();
+      }
+    }
+
+    prepare();
   }, []);
 
   useEffect(() => {
@@ -29,8 +45,8 @@ export default function RootLayout() {
     }
   }, [isAuthenticated, segments, isLoading]);
 
-  // Show loading screen while checking auth
-  if (isLoading) {
+  // Show loading screen while checking auth or app not ready
+  if (isLoading || !appIsReady) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={theme.colors.primary} />

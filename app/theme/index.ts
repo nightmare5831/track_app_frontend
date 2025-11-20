@@ -6,10 +6,10 @@ export const theme = {
     primaryLight: '#3b82f6',
     primaryDark: '#1d4ed8',
 
-    // Neutral colors - Simple grayscale
+    // Neutral colors - Light theme
     background: '#ffffff',
-    surface: '#f8f9fa',
-    border: '#e9ecef',
+    surface: '#e8e8e8',
+    border: '#d1d5db',
 
     // Text colors
     text: '#212529',

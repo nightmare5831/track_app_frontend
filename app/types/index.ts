@@ -1,11 +1,15 @@
+export interface User {
+  _id: string;
+  name: string;
+  email: string;
+}
+
 export interface Equipment {
   _id: string;
   name: string;
-  type: 'excavator' | 'truck' | 'drill' | 'loader' | 'other';
-  registrationNumber: string;
+  category: 'loading' | 'transport';
   capacity?: number;
   status: 'active' | 'inactive' | 'maintenance';
-  owner: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -13,26 +17,51 @@ export interface Equipment {
 export interface Material {
   _id: string;
   name: string;
-  category: 'fuel' | 'explosives' | 'tools' | 'parts' | 'consumables' | 'other';
-  quantity: number;
-  unit: 'kg' | 'liter' | 'piece' | 'ton' | 'meter';
-  location?: string;
-  owner: string;
+  type: 'ore' | 'mineral' | 'waste' | 'processed' | 'other';
+  properties?: {
+    density?: number;
+    volume?: number;
+    gradePercentage?: number;
+    moistureContent?: number;
+    customFields?: Array<{
+      name: string;
+      value: any;
+    }>;
+  };
   createdAt: string;
   updatedAt: string;
 }
 
 export interface Activity {
+  _id: string;
+  name: string;
+  activityType: 'lunch' | 'dinner' | 'refueling' | 'checklist' | 'transfer' | 'maintenance' |
+    'service' | 'training_dds' | 'operating_other_machine' | 'machine_change' |
+    'bench_relocation' | 'stopped' | 'waiting' |
+    'loading' | 'loading_truck' |
+    'load' | 'trip_to_destination' | 'unload' | 'return';
+  activityDetails?: {
+    stopped_reason: string[];
+    waiting_reason: string[];
+    custom_reason: string[];
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Operation {
   _id?: string;
-  equipment: string;
-  activityType: string;
-  material?: string;
-  truckId?: string;
-  details?: string;
+  equipment: string | Equipment;
+  operator: string;
+  activity: string | Activity;
+  material?: string | Material;
+  truckBeingLoaded?: string | Equipment;
+  miningFront?: string;
+  destination?: string;
+  distance?: number;
+  activityDetails?: string;
   startTime: string;
   endTime?: string;
-  status: 'in-progress' | 'completed';
-  createdBy: string;
   createdAt?: string;
   updatedAt?: string;
 }

@@ -55,9 +55,9 @@ export const Button: React.FC<ButtonProps> = ({
       ) : (
         <View style={styles.content}>
           {icon && iconPosition === 'left' && (
-            <Ionicons name={icon} size={iconSize} color={iconColor} style={styles.iconLeft} />
+            <Ionicons name={icon} size={iconSize} color={iconColor} style={title ? styles.iconLeft : undefined} />
           )}
-          <Text style={textStyles}>{title}</Text>
+          {title && <Text style={textStyles}>{title}</Text>}
           {icon && iconPosition === 'right' && (
             <Ionicons name={icon} size={iconSize} color={iconColor} style={styles.iconRight} />
           )}

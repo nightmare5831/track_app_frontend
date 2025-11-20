@@ -86,7 +86,7 @@ export default function SearchableSelect({
                 }}
                 style={styles.closeButton}
               >
-                <Ionicons name="close" size={20} color={theme.colors.textSecondary} />
+                <Ionicons name="close" size={24} color={theme.colors.text} />
               </TouchableOpacity>
             </View>
 
@@ -210,12 +210,14 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
   },
   closeButton: {
-    width: 32,
-    height: 32,
+    width: 36,
+    height: 36,
     borderRadius: theme.borderRadius.full,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -239,23 +241,19 @@ const styles = StyleSheet.create({
     padding: theme.spacing.xs,
   },
   optionsList: {
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.md,
   },
   optionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
-    marginBottom: theme.spacing.xs,
-    backgroundColor: theme.colors.background,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    paddingVertical: 14,
+    paddingHorizontal: theme.spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
   },
   optionItemSelected: {
-    backgroundColor: theme.colors.surface,
-    borderColor: theme.colors.primary,
+    backgroundColor: 'rgba(59, 130, 246, 0.08)',
   },
   optionText: {
     fontSize: theme.fontSize.md,
@@ -264,7 +262,7 @@ const styles = StyleSheet.create({
   },
   optionTextSelected: {
     color: theme.colors.primary,
-    fontWeight: theme.fontWeight.semibold,
+    fontWeight: theme.fontWeight.medium,
   },
   noResults: {
     padding: theme.spacing.xl,

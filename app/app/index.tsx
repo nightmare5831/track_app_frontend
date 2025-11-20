@@ -1,22 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, SafeAreaView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, SafeAreaView, TouchableOpacity, Alert, StyleSheet, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { APP_NAME } from '../data';
 import { useAppStore } from '../store/useAppStore';
-import { Button, Card, Badge } from '../components/ui';
+import Request from '../lib/request';
+import { Card, Badge } from '../components/ui';
 import { theme } from '../theme';
+import { Activity, User as UserType } from '../types';
 
 export default function Home() {
   const router = useRouter();
-  const { user, logout, activeOperations, setSelectedEquipment, setCurrentActivity, setActivityStartTime } = useAppStore();
+  const { user, logout, activeOperations, setSelectedEquipment, addActiveOperation, removeActiveOperation } = useAppStore();
   const [currentTime, setCurrentTime] = useState(Date.now());
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [users, setUsers] = useState<UserType[]>([]);
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      const [activitiesRes, usersRes] = await Promise.all([
+        Request.Get('/activities'),
+        Request.Get('/users')
+      ]);
+      if (activitiesRes.success) setActivities(activitiesRes.data);
+      if (usersRes.success) setUsers(usersRes.data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -31,31 +52,80 @@ export default function Home() {
   };
 
   const handleViewOperation = (equipmentId: string) => {
-    const operation = activeOperations.find(op => op.equipment._id === equipmentId);
-    if (operation) {
-      setSelectedEquipment(operation.equipment);
-      setCurrentActivity(operation.activity);
-      setActivityStartTime(operation.startTime);
+    const activeOp = activeOperations.find(op => op.equipment._id === equipmentId);
+    if (activeOp) {
+      setSelectedEquipment(activeOp.equipment);
       router.push('/operation');
+    }
+  };
+
+  const handleStopOperation = async (operationId: string | undefined) => {
+    if (!operationId) return;
+
+    Alert.alert(
+      'Stop Operation',
+      'Are you sure you want to stop this operation?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Stop',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const response = await Request.Post(`/operations/${operationId}/stop`, { distance: 0 });
+              if (response.success) {
+                removeActiveOperation(operationId);
+              }
+            } catch (error) {
+              console.error('Error stopping operation:', error);
+              Alert.alert('Error', 'Failed to stop operation');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleRecreateOperation = async (activeOp: any) => {
+    if (!activeOp.operation) {
+      Alert.alert('Error', 'Operation information is missing');
+      return;
+    }
+
+    try {
+      const response = await Request.Post('/operations/start', {
+        equipment: activeOp.equipment._id,
+        operator: activeOp.operation.operator,
+        activity: activeOp.operation.activity
+      });
+
+      if (response.success) {
+        const now = Date.now();
+        addActiveOperation({
+          equipment: activeOp.equipment,
+          operation: response.data,
+          startTime: now
+        });
+      }
+    } catch (error) {
+      console.error('Error recreating operation:', error);
+      Alert.alert('Error', 'Failed to recreate operation');
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <View>
+            <Image source={require('../assets/mine.png')} style={styles.logo} />
+            <View style={styles.headerTextContainer}>
               <Text style={styles.headerTitle}>{APP_NAME}</Text>
               {user && <Text style={styles.headerSubtitle}>Welcome, {user.name}</Text>}
             </View>
-            <Button
-              title=""
-              onPress={handleLogout}
-              variant="ghost"
-              size="sm"
-              icon="log-out-outline"
-            />
+            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+              <Ionicons name="log-out-outline" size={20} color={theme.colors.error} />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -67,47 +137,79 @@ export default function Home() {
                 <Badge label={activeOperations.length.toString()} variant="primary" size="sm" />
               </View>
 
-              {activeOperations.map((operation, index) => {
-                const elapsed = Math.floor((currentTime - operation.startTime) / 1000);
+              {activeOperations.map((activeOp, index) => {
+                const elapsed = Math.floor((currentTime - activeOp.startTime) / 1000);
+                const activityId = typeof activeOp.operation.activity === 'string' ? activeOp.operation.activity : (activeOp.operation.activity as any)?._id;
+                const activity = activities.find(a => a._id === activityId);
+                const operatorId = typeof activeOp.operation.operator === 'string' ? activeOp.operation.operator : (activeOp.operation.operator as any)?._id;
+                const operator = users.find(u => u._id === operatorId);
+
                 return (
                   <Card
-                    key={operation.activity._id || `${operation.equipment._id}-${index}`}
-                    onPress={() => handleViewOperation(operation.equipment._id)}
+                    key={activeOp.operation._id || `${activeOp.equipment._id}-${index}`}
+                    variant="flat"
                     padding="sm"
                   >
-                    <View style={styles.operationCard}>
+                    <TouchableOpacity
+                      style={styles.operationCard}
+                      onPress={() => handleViewOperation(activeOp.equipment._id)}
+                      activeOpacity={0.7}
+                    >
                       <View style={styles.operationIcon}>
                         <Ionicons
-                          name={operation.equipment.type === 'excavator' ? 'construct' : 'car'}
+                          name={activeOp.equipment.category === 'loading' ? 'construct' : 'car'}
                           size={16}
                           color={theme.colors.primary}
                         />
                       </View>
                       <View style={styles.operationInfo}>
-                        <Text style={styles.operationName}>{operation.equipment.name}</Text>
-                        <Badge label={operation.activity.activityType} variant="success" size="sm" />
+                        <Text style={styles.operationName}>{activeOp.equipment.name}</Text>
+                        <Text style={styles.operationActivity}>{activity?.name || 'Activity'}</Text>
+                        <Text style={styles.operationOperator}>{operator?.name || 'Operator'}</Text>
                       </View>
-                      <View style={styles.operationTime}>
-                        <Ionicons name="time-outline" size={12} color={theme.colors.textSecondary} />
-                        <Text style={styles.operationTimeValue}>{formatTime(elapsed)}</Text>
+                      <View style={styles.operationRight}>
+                        <View style={styles.operationTime}>
+                          <Ionicons name="time-outline" size={12} color={theme.colors.textSecondary} />
+                          <Text style={styles.operationTimeValue}>{formatTime(elapsed)}</Text>
+                        </View>
+                        <View style={styles.operationActions}>
+                          <TouchableOpacity
+                            style={[styles.actionButton, styles.stopButton]}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              handleStopOperation(activeOp.operation._id);
+                            }}
+                          >
+                            <Ionicons name="stop-circle" size={20} color={theme.colors.error} />
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={styles.actionButton}
+                            onPress={(e) => {
+                              e.stopPropagation();
+                              handleRecreateOperation(activeOp);
+                            }}
+                          >
+                            <Ionicons name="play-circle" size={20} color={theme.colors.primary} />
+                          </TouchableOpacity>
+                        </View>
                       </View>
-                    </View>
+                    </TouchableOpacity>
                   </Card>
                 );
               })}
             </>
           )}
-
-          <Button
-            title="New Operation"
-            onPress={() => router.push('/equipment')}
-            icon="add-circle-outline"
-            fullWidth
-            size="lg"
-          />
         </View>
         <StatusBar style="auto" />
       </ScrollView>
+
+      <TouchableOpacity
+        style={styles.floatingButton}
+        onPress={() => router.push('/equipment')}
+      >
+        <Ionicons name="add" size={24} color="#fff" />
+        <Text style={styles.floatingButtonText}>Add Operation</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
@@ -115,10 +217,35 @@ export default function Home() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.background,
   },
   scrollView: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 100,
+  },
+  floatingButton: {
+    position: 'absolute',
+    bottom: 30,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.lg,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.primary,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  floatingButtonText: {
+    color: '#fff',
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
   },
   header: {
     backgroundColor: theme.colors.background,
@@ -133,6 +260,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  logo: {
+    width: 40,
+    height: 40,
+    marginRight: theme.spacing.sm,
+  },
+  headerTextContainer: {
+    flex: 1,
+  },
   headerTitle: {
     fontSize: theme.fontSize.xl,
     fontWeight: theme.fontWeight.bold,
@@ -142,6 +277,14 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.sm,
     color: theme.colors.textSecondary,
     marginTop: theme.spacing.xs,
+  },
+  logoutButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
     padding: theme.spacing.md,
@@ -161,6 +304,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  operationRight: {
+    alignItems: 'flex-end',
+    gap: theme.spacing.xs,
+  },
+  operationActions: {
+    flexDirection: 'row',
+    gap: theme.spacing.xs,
+  },
+  actionButton: {
+    width: 36,
+    height: 36,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stopButton: {
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+  },
   operationIcon: {
     width: 28,
     height: 28,
@@ -172,13 +334,21 @@ const styles = StyleSheet.create({
   },
   operationInfo: {
     flex: 1,
-    gap: theme.spacing.xs,
   },
   operationName: {
     fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.semibold,
     color: theme.colors.text,
-    marginBottom: 2,
+  },
+  operationActivity: {
+    fontSize: theme.fontSize.xs,
+    color: theme.colors.primary,
+    marginTop: 2,
+  },
+  operationOperator: {
+    fontSize: theme.fontSize.xs,
+    color: theme.colors.textSecondary,
+    marginTop: 2,
   },
   operationTime: {
     flexDirection: 'row',

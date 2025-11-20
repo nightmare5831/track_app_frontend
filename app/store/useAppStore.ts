@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Equipment, Activity } from '../types';
+import { Equipment, Operation } from '../types';
 
 interface User {
   id: string;
@@ -8,9 +8,9 @@ interface User {
   email: string;
 }
 
-interface ActiveOperation {
+interface ActiveOperationState {
   equipment: Equipment;
-  activity: Activity;
+  operation: Operation;
   startTime: number;
 }
 
@@ -20,18 +20,18 @@ interface AppState {
   user: User | null;
   isAuthenticated: boolean;
   selectedEquipment: Equipment | null;
-  currentActivity: Activity | null;
-  activityStartTime: number | null;
-  activeOperations: ActiveOperation[];
+  currentOperation: Operation | null;
+  operationStartTime: number | null;
+  activeOperations: ActiveOperationState[];
   setLoading: (loading: boolean) => void;
   setAuth: (token: string, user: User) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
   setSelectedEquipment: (equipment: Equipment | null) => void;
-  setCurrentActivity: (activity: Activity | null) => void;
-  setActivityStartTime: (time: number | null) => void;
-  addActiveOperation: (operation: ActiveOperation) => void;
-  removeActiveOperation: (equipmentId: string) => void;
+  setCurrentOperation: (operation: Operation | null) => void;
+  setOperationStartTime: (time: number | null) => void;
+  addActiveOperation: (operation: ActiveOperationState) => void;
+  removeActiveOperation: (operationId: string) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -40,8 +40,8 @@ export const useAppStore = create<AppState>((set) => ({
   user: null,
   isAuthenticated: false,
   selectedEquipment: null,
-  currentActivity: null,
-  activityStartTime: null,
+  currentOperation: null,
+  operationStartTime: null,
   activeOperations: [],
 
   setLoading: (loading) => set({ isLoading: loading }),
@@ -55,7 +55,7 @@ export const useAppStore = create<AppState>((set) => ({
   logout: async () => {
     await AsyncStorage.removeItem('authToken');
     await AsyncStorage.removeItem('user');
-    set({ token: null, user: null, isAuthenticated: false, selectedEquipment: null, currentActivity: null, activityStartTime: null, activeOperations: [] });
+    set({ token: null, user: null, isAuthenticated: false, selectedEquipment: null, currentOperation: null, operationStartTime: null, activeOperations: [] });
   },
 
   checkAuth: async () => {
@@ -76,18 +76,14 @@ export const useAppStore = create<AppState>((set) => ({
   },
 
   setSelectedEquipment: (equipment) => set({ selectedEquipment: equipment }),
-  setCurrentActivity: (activity) => set({ currentActivity: activity }),
-  setActivityStartTime: (time) => set({ activityStartTime: time }),
+  setCurrentOperation: (operation) => set({ currentOperation: operation }),
+  setOperationStartTime: (time) => set({ operationStartTime: time }),
 
   addActiveOperation: (operation) => set((state) => ({
-    // Remove any existing operation for this equipment first, then add new one
-    activeOperations: [
-      ...state.activeOperations.filter(op => op.equipment._id !== operation.equipment._id),
-      operation
-    ]
+    activeOperations: [...state.activeOperations, operation]
   })),
 
-  removeActiveOperation: (equipmentId) => set((state) => ({
-    activeOperations: state.activeOperations.filter(op => op.equipment._id !== equipmentId)
+  removeActiveOperation: (operationId) => set((state) => ({
+    activeOperations: state.activeOperations.filter(op => op.operation._id !== operationId)
   })),
 }));

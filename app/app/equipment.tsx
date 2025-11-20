@@ -10,11 +10,11 @@ import { theme } from '../theme';
 
 export default function EquipmentScreen() {
   const router = useRouter();
-  const { setSelectedEquipment, setCurrentActivity, setActivityStartTime } = useAppStore();
+  const { setSelectedEquipment, setCurrentOperation, setOperationStartTime } = useAppStore();
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'excavator' | 'truck'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'loading' | 'transport'>('all');
 
   useEffect(() => {
     fetchEquipment();
@@ -35,21 +35,20 @@ export default function EquipmentScreen() {
 
   const handleSelectEquipment = (item: Equipment) => {
     setSelectedEquipment(item);
-    // Clear any old activity state when selecting new equipment
-    setCurrentActivity(null);
-    setActivityStartTime(null);
+    // Clear any old operation state when selecting new equipment
+    setCurrentOperation(null);
+    setOperationStartTime(null);
     router.push('/operation');
   };
 
   const filteredEquipment = equipment.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         item.registrationNumber.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = filterType === 'all' || item.type === filterType;
+    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = filterType === 'all' || item.category === filterType;
     return matchesSearch && matchesType;
   });
 
-  const excavators = filteredEquipment.filter(e => e.type === 'excavator');
-  const trucks = filteredEquipment.filter(e => e.type === 'truck');
+  const loadingEquipment = filteredEquipment.filter(e => e.category === 'loading');
+  const transportEquipment = filteredEquipment.filter(e => e.category === 'transport');
 
   if (loading) {
     return (
@@ -63,7 +62,7 @@ export default function EquipmentScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.push('/')} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
@@ -74,7 +73,7 @@ export default function EquipmentScreen() {
 
       <View style={styles.content}>
         <Input
-          placeholder="Search by name or number..."
+          placeholder="Search by name..."
           value={searchQuery}
           onChangeText={setSearchQuery}
           icon="search-outline"
@@ -92,32 +91,33 @@ export default function EquipmentScreen() {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.tab}
-            onPress={() => setFilterType('excavator')}
+            onPress={() => setFilterType('loading')}
           >
-            <Text style={[styles.tabText, filterType === 'excavator' && styles.tabTextActive]}>
-              Excavators ({equipment.filter(e => e.type === 'excavator').length})
+            <Text style={[styles.tabText, filterType === 'loading' && styles.tabTextActive]}>
+              Loading ({equipment.filter(e => e.category === 'loading').length})
             </Text>
-            {filterType === 'excavator' && <View style={styles.tabIndicator} />}
+            {filterType === 'loading' && <View style={styles.tabIndicator} />}
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.tab}
-            onPress={() => setFilterType('truck')}
+            onPress={() => setFilterType('transport')}
           >
-            <Text style={[styles.tabText, filterType === 'truck' && styles.tabTextActive]}>
-              Trucks ({equipment.filter(e => e.type === 'truck').length})
+            <Text style={[styles.tabText, filterType === 'transport' && styles.tabTextActive]}>
+              Transport ({equipment.filter(e => e.category === 'transport').length})
             </Text>
-            {filterType === 'truck' && <View style={styles.tabIndicator} />}
+            {filterType === 'transport' && <View style={styles.tabIndicator} />}
           </TouchableOpacity>
         </View>
 
         <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-          {(filterType === 'all' || filterType === 'excavator') && excavators.length > 0 && (
+          {(filterType === 'all' || filterType === 'loading') && loadingEquipment.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Excavators</Text>
-              {excavators.map((item) => (
+              <Text style={styles.sectionTitle}>Loading Equipment</Text>
+              {loadingEquipment.map((item) => (
                 <Card
                   key={item._id}
                   onPress={() => handleSelectEquipment(item)}
+                  variant="orange"
                   padding="sm"
                 >
                   <View style={styles.equipmentCard}>
@@ -126,15 +126,11 @@ export default function EquipmentScreen() {
                     </View>
                     <View style={styles.equipmentInfo}>
                       <Text style={styles.equipmentName}>{item.name}</Text>
-                      <View style={styles.equipmentMeta}>
-                        <Text style={styles.equipmentNumber}>{item.registrationNumber}</Text>
-                        {item.capacity && (
-                          <>
-                            <Text style={styles.metaDot}>•</Text>
-                            <Text style={styles.equipmentCapacity}>{item.capacity}m³</Text>
-                          </>
-                        )}
-                      </View>
+                      {item.capacity && (
+                        <View style={styles.equipmentMeta}>
+                          <Text style={styles.equipmentCapacity}>{item.capacity}m³</Text>
+                        </View>
+                      )}
                     </View>
                     <Ionicons name="chevron-forward" size={16} color={theme.colors.textTertiary} />
                   </View>
@@ -143,13 +139,14 @@ export default function EquipmentScreen() {
             </View>
           )}
 
-          {(filterType === 'all' || filterType === 'truck') && trucks.length > 0 && (
+          {(filterType === 'all' || filterType === 'transport') && transportEquipment.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Trucks</Text>
-              {trucks.map((item) => (
+              <Text style={styles.sectionTitle}>Transport Equipment</Text>
+              {transportEquipment.map((item) => (
                 <Card
                   key={item._id}
                   onPress={() => handleSelectEquipment(item)}
+                  variant="blue"
                   padding="sm"
                 >
                   <View style={styles.equipmentCard}>
@@ -158,15 +155,11 @@ export default function EquipmentScreen() {
                     </View>
                     <View style={styles.equipmentInfo}>
                       <Text style={styles.equipmentName}>{item.name}</Text>
-                      <View style={styles.equipmentMeta}>
-                        <Text style={styles.equipmentNumber}>{item.registrationNumber}</Text>
-                        {item.capacity && (
-                          <>
-                            <Text style={styles.metaDot}>•</Text>
-                            <Text style={styles.equipmentCapacity}>{item.capacity} tons</Text>
-                          </>
-                        )}
-                      </View>
+                      {item.capacity && (
+                        <View style={styles.equipmentMeta}>
+                          <Text style={styles.equipmentCapacity}>{item.capacity} tons</Text>
+                        </View>
+                      )}
                     </View>
                     <Ionicons name="chevron-forward" size={16} color={theme.colors.textTertiary} />
                   </View>
@@ -191,7 +184,7 @@ export default function EquipmentScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.background,
   },
   loadingContainer: {
     flex: 1,

@@ -5,7 +5,7 @@ import { theme } from '../../theme';
 interface CardProps {
   children: React.ReactNode;
   onPress?: () => void;
-  variant?: 'default' | 'flat';
+  variant?: 'default' | 'flat' | 'blue' | 'green' | 'purple' | 'orange';
   padding?: 'none' | 'sm' | 'md' | 'lg';
 }
 
@@ -19,6 +19,10 @@ export const Card: React.FC<CardProps> = ({
     styles.card,
     variant === 'default' && styles.cardDefault,
     variant === 'flat' && styles.cardFlat,
+    variant === 'blue' && styles.cardBlue,
+    variant === 'green' && styles.cardGreen,
+    variant === 'purple' && styles.cardPurple,
+    variant === 'orange' && styles.cardOrange,
     padding === 'sm' && styles.paddingSm,
     padding === 'md' && styles.paddingMd,
     padding === 'lg' && styles.paddingLg,
@@ -45,7 +49,19 @@ const styles = StyleSheet.create({
     ...theme.shadows.sm,
   },
   cardFlat: {
-    backgroundColor: theme.colors.surface,
+    backgroundColor: 'rgba(156, 163, 175, 0.15)',
+  },
+  cardBlue: {
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+  },
+  cardGreen: {
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+  },
+  cardPurple: {
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+  },
+  cardOrange: {
+    backgroundColor: 'rgba(251, 146, 60, 0.1)',
   },
   paddingSm: {
     padding: theme.spacing.sm,
