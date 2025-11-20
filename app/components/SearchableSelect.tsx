@@ -99,6 +99,9 @@ export default function SearchableSelect({
                 value={searchQuery}
                 onChangeText={setSearchQuery}
                 autoFocus
+                cursorColor="#2563eb"
+                selectionColor="#3b82f6"
+                underlineColorAndroid="transparent"
               />
               {searchQuery.length > 0 && (
                 <TouchableOpacity

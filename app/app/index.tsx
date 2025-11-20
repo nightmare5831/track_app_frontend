@@ -17,6 +17,7 @@ export default function Home() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [users, setUsers] = useState<UserType[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
     const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
@@ -24,21 +25,28 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    // Only fetch data if user is authenticated
+    if (user) {
+      fetchData();
+    }
+  }, [user]);
 
   const fetchData = async () => {
     try {
+      setDataLoading(true);
       const [activitiesRes, usersRes, materialsRes] = await Promise.all([
         Request.Get('/activities'),
         Request.Get('/users'),
         Request.Get('/materials')
       ]);
+
       if (activitiesRes.success) setActivities(activitiesRes.data);
       if (usersRes.success) setUsers(usersRes.data);
       if (materialsRes.success) setMaterials(materialsRes.data);
     } catch (error) {
       console.error('Error fetching data:', error);
+    } finally {
+      setDataLoading(false);
     }
   };
 

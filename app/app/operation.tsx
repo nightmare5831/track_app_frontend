@@ -215,7 +215,7 @@ export default function OperationScreen() {
 
   // Show fields based on activityType
   const showTruckField = selectedActivityObj?.activityType === 'loading';
-  const showMaterialField = selectedActivityObj?.activityType === 'loading' || selectedActivityObj?.activityType === 'transport';
+  const showMaterialField = selectedActivityObj?.activityType === 'loading'; // Only show for loading activities
   const showMiningFrontField = selectedActivityObj?.activityType === 'transport';
   const showDestinationField = selectedActivityObj?.activityType === 'transport';
 

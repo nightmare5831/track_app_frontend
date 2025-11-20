@@ -62,6 +62,9 @@ export const Input: React.FC<InputProps> = ({
           editable={!disabled}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
+          cursorColor="#2563eb"
+          selectionColor="#3b82f6"
+          underlineColorAndroid="transparent"
         />
         {secureTextEntry && (
           <TouchableOpacity
@@ -94,12 +97,12 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.background,
+    backgroundColor: '#f9fafb', // Light gray background for better visibility
     borderRadius: theme.borderRadius.sm,
     borderWidth: 1,
-    borderColor: theme.colors.border,
+    borderColor: '#e5e7eb', // Lighter border
     paddingHorizontal: theme.spacing.sm,
-    height: 38,
+    height: 44, // Slightly taller for better UX
   },
   inputContainerFocused: {
     borderColor: theme.colors.primary,

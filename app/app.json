@@ -22,7 +22,8 @@
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.handminecontrol.app"
+      "package": "com.handminecontrol.app",
+      "primaryColor": "#2563eb"
     },
     "web": {
       "favicon": "./assets/favicon.png"

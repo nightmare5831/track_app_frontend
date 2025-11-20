@@ -95,7 +95,7 @@ export default function Login() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.surface,
+    backgroundColor: '#ffffff', // White background
   },
   scrollContent: {
     flexGrow: 1,
