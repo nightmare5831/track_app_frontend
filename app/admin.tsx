@@ -34,7 +34,7 @@ interface OperatorStatus {
 
 export default function AdminScreen() {
   const router = useRouter();
-  const { user } = useAppStore();
+  const { user, logout } = useAppStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [operators, setOperators] = useState<OperatorStatus[]>([]);
   const [refreshing, setRefreshing] = useState(false);
@@ -78,6 +78,11 @@ export default function AdminScreen() {
     fetchData();
   };
 
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/login');
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
@@ -117,16 +122,18 @@ export default function AdminScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
-        </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>Admin Dashboard</Text>
-          <Text style={styles.headerSubtitle}>Operations Overview</Text>
+          <Text style={styles.headerSubtitle}>Welcome, {user?.name}</Text>
         </View>
-        <TouchableOpacity onPress={onRefresh} style={styles.refreshButton}>
-          <Ionicons name="refresh" size={24} color={theme.colors.primary} />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity onPress={onRefresh} style={styles.refreshButton}>
+            <Ionicons name="refresh" size={24} color={theme.colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+            <Ionicons name="log-out" size={24} color="#ffffff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -136,37 +143,45 @@ export default function AdminScreen() {
         <View style={styles.content}>
           {/* Statistics Cards */}
           <View style={styles.statsGrid}>
-            <Card variant="flat" padding="md" style={styles.statCard}>
-              <View style={styles.statContent}>
-                <Ionicons name="play-circle" size={24} color={theme.colors.primary} />
-                <Text style={styles.statValue}>{stats?.activeOperations || 0}</Text>
-                <Text style={styles.statLabel}>Active</Text>
-              </View>
-            </Card>
+            <View style={styles.statCardWrapper}>
+              <Card variant="flat" padding="md">
+                <View style={styles.statContent}>
+                  <Ionicons name="play-circle" size={24} color={theme.colors.primary} />
+                  <Text style={styles.statValue}>{stats?.activeOperations || 0}</Text>
+                  <Text style={styles.statLabel}>Active</Text>
+                </View>
+              </Card>
+            </View>
 
-            <Card variant="flat" padding="md" style={styles.statCard}>
-              <View style={styles.statContent}>
-                <Ionicons name="alert-circle" size={24} color={theme.colors.error} />
-                <Text style={styles.statValue}>{stats?.inactivityAlerts || 0}</Text>
-                <Text style={styles.statLabel}>Alerts</Text>
-              </View>
-            </Card>
+            <View style={styles.statCardWrapper}>
+              <Card variant="flat" padding="md">
+                <View style={styles.statContent}>
+                  <Ionicons name="alert-circle" size={24} color={theme.colors.error} />
+                  <Text style={styles.statValue}>{stats?.inactivityAlerts || 0}</Text>
+                  <Text style={styles.statLabel}>Alerts</Text>
+                </View>
+              </Card>
+            </View>
 
-            <Card variant="flat" padding="md" style={styles.statCard}>
-              <View style={styles.statContent}>
-                <Ionicons name="people" size={24} color={theme.colors.success} />
-                <Text style={styles.statValue}>{stats?.activeOperators || 0}</Text>
-                <Text style={styles.statLabel}>Working</Text>
-              </View>
-            </Card>
+            <View style={styles.statCardWrapper}>
+              <Card variant="flat" padding="md">
+                <View style={styles.statContent}>
+                  <Ionicons name="people" size={24} color={theme.colors.success} />
+                  <Text style={styles.statValue}>{stats?.activeOperators || 0}</Text>
+                  <Text style={styles.statLabel}>Working</Text>
+                </View>
+              </Card>
+            </View>
 
-            <Card variant="flat" padding="md" style={styles.statCard}>
-              <View style={styles.statContent}>
-                <Ionicons name="pause-circle" size={24} color={theme.colors.textSecondary} />
-                <Text style={styles.statValue}>{stats?.idleOperators || 0}</Text>
-                <Text style={styles.statLabel}>Idle</Text>
-              </View>
-            </Card>
+            <View style={styles.statCardWrapper}>
+              <Card variant="flat" padding="md">
+                <View style={styles.statContent}>
+                  <Ionicons name="pause-circle" size={24} color={theme.colors.textSecondary} />
+                  <Text style={styles.statValue}>{stats?.idleOperators || 0}</Text>
+                  <Text style={styles.statLabel}>Idle</Text>
+                </View>
+              </Card>
+            </View>
           </View>
 
           {/* Today's Summary */}
@@ -265,14 +280,12 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.lg,
     paddingBottom: theme.spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
-  },
-  backButton: {
-    marginRight: theme.spacing.md,
   },
   headerContent: {
     flex: 1,
@@ -287,8 +300,31 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     marginTop: 2,
   },
+  headerActions: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+    alignItems: 'center',
+  },
   refreshButton: {
-    padding: theme.spacing.xs,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoutButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#ef4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 5,
   },
   scrollView: {
     flex: 1,
@@ -303,9 +339,8 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm,
     marginBottom: theme.spacing.md,
   },
-  statCard: {
-    flex: 1,
-    minWidth: '47%',
+  statCardWrapper: {
+    width: '48.5%',
   },
   statContent: {
     alignItems: 'center',

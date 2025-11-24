@@ -7,7 +7,7 @@ import '../global.css';
 export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
-  const { isAuthenticated, checkAuth } = useAppStore();
+  const { isAuthenticated, checkAuth, user } = useAppStore();
 
   useEffect(() => {
     // Check authentication status on mount
@@ -18,11 +18,21 @@ export default function RootLayout() {
     if (!isAuthenticated && segments[0] !== 'login' && segments[0] !== 'register') {
       // Redirect to login if not authenticated
       router.replace('/login');
-    } else if (isAuthenticated && (segments[0] === 'login' || segments[0] === 'register')) {
-      // Redirect to home after login
-      router.replace('/');
+    } else if (isAuthenticated) {
+      // Admin should always be on admin dashboard
+      if (user?.role === 'administrator' && segments[0] !== 'admin') {
+        router.replace('/admin');
+      }
+      // Redirect from login/register to appropriate home
+      else if (segments[0] === 'login' || segments[0] === 'register') {
+        if (user?.role === 'administrator') {
+          router.replace('/admin');
+        } else {
+          router.replace('/');
+        }
+      }
     }
-  }, [isAuthenticated, segments]);
+  }, [isAuthenticated, segments, user]);
 
   return (
     <>
