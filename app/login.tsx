@@ -12,7 +12,10 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const setAuth = useAppStore((state) => state.setAuth);
+  const { setAuth, syncActiveOperations } = useAppStore((state) => ({
+    setAuth: state.setAuth,
+    syncActiveOperations: state.syncActiveOperations
+  }));
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -28,6 +31,8 @@ export default function Login() {
         Alert.alert('Error', response.error);
       } else {
         await setAuth(response.token, response.user);
+        // Sync active operations from server after successful login
+        await syncActiveOperations();
         router.replace('/');
       }
     } catch (error) {

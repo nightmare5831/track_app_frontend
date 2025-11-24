@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Equipment, Operation } from '../types';
+import Request from '../lib/request';
 
 interface User {
   id: string;
@@ -30,6 +31,7 @@ interface AppState {
   setAuth: (token: string, user: User) => Promise<void>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  syncActiveOperations: () => Promise<void>;
   setSelectedEquipment: (equipment: Equipment | null) => void;
   setCurrentOperation: (operation: Operation | null) => void;
   setOperationStartTime: (time: number | null) => void;
@@ -87,6 +89,48 @@ export const useAppStore = create<AppState>((set) => ({
     } catch (error) {
       console.error('Auth check failed:', error);
       set({ isLoading: false, isAuthenticated: false });
+    }
+  },
+
+  syncActiveOperations: async () => {
+    try {
+      // Fetch current active operation from server
+      const response = await Request.Get('/operations/current');
+
+      if (response.success && response.data) {
+        // User has an active operation on the server
+        const operation: Operation = response.data;
+
+        // Calculate start time from operation's startTime
+        const startTime = new Date(operation.startTime).getTime();
+
+        // Create active operation state
+        const activeOpState: ActiveOperationState = {
+          equipment: operation.equipment as Equipment,
+          operation: operation,
+          startTime: startTime,
+          repeatCount: 1
+        };
+
+        // Update store with the active operation
+        set({
+          activeOperation: activeOpState,
+          activeOperations: [activeOpState],
+          currentOperation: operation,
+          operationStartTime: startTime
+        });
+      } else {
+        // No active operation on server, ensure state is clean
+        set({
+          activeOperation: null,
+          activeOperations: [],
+          currentOperation: null,
+          operationStartTime: null
+        });
+      }
+    } catch (error) {
+      console.error('Failed to sync active operations:', error);
+      // On error, don't clear existing state - it might be a network issue
     }
   },
 
