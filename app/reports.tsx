@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, SafeAreaView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import Request from '../lib/request';
 import { Card } from '../components/ui';
 import { theme } from '../theme';
@@ -14,6 +15,12 @@ export default function ReportsScreen() {
   const [dailyReport, setDailyReport] = useState<any>(null);
   const [performance, setPerformance] = useState<any>(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isDatePickerVisible, setDatePickerVisible] = useState(false);
+
+  const handleDateConfirm = (date: Date) => {
+    setSelectedDate(date.toISOString().split('T')[0]);
+    setDatePickerVisible(false);
+  };
 
   useEffect(() => {
     fetchReports();
@@ -35,12 +42,6 @@ export default function ReportsScreen() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const changeDate = (days: number) => {
-    const current = new Date(selectedDate);
-    current.setDate(current.getDate() + days);
-    setSelectedDate(current.toISOString().split('T')[0]);
   };
 
   const formatDate = (dateStr: string) => {
@@ -113,16 +114,26 @@ export default function ReportsScreen() {
         {/* Date Selector */}
         <Card variant="flat">
           <Text className="text-sm font-semibold text-gray-600 mb-2">Select Date</Text>
-          <View className="flex-row items-center justify-between">
-            <TouchableOpacity onPress={() => changeDate(-1)} className="p-2 bg-gray-200 rounded-lg">
-              <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
-            </TouchableOpacity>
-            <Text className="text-lg font-bold">{formatDate(selectedDate)}</Text>
-            <TouchableOpacity onPress={() => changeDate(1)} className="p-2 bg-gray-200 rounded-lg">
-              <Ionicons name="chevron-forward" size={24} color={theme.colors.text} />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={() => setDatePickerVisible(true)}
+            className="flex-row items-center justify-between bg-gray-100 p-4 rounded-xl"
+          >
+            <View className="flex-row items-center">
+              <Ionicons name="calendar" size={24} color={theme.colors.primary} />
+              <Text className="text-lg font-bold ml-3">{formatDate(selectedDate)}</Text>
+            </View>
+            <Ionicons name="chevron-down" size={20} color={theme.colors.textSecondary} />
+          </TouchableOpacity>
         </Card>
+
+        <DateTimePickerModal
+          isVisible={isDatePickerVisible}
+          mode="date"
+          date={new Date(selectedDate)}
+          onConfirm={handleDateConfirm}
+          onCancel={() => setDatePickerVisible(false)}
+          maximumDate={new Date()}
+        />
 
         {/* Daily Summary */}
         {dailyReport && (
