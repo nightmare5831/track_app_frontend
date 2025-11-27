@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
 import { Equipment, Operation } from '../types';
 import Request from '../lib/request';
-import syncService from '../lib/syncService';
 
 interface User {
   id: string;
@@ -97,7 +97,8 @@ export const useAppStore = create<AppState>((set) => ({
   syncActiveOperations: async () => {
     try {
       // Check if online before syncing
-      const isOnline = await syncService.isOnline();
+      const state = await NetInfo.fetch();
+      const isOnline = state.isConnected === true && state.isInternetReachable === true;
 
       if (!isOnline) {
         // Offline: don't clear state, keep any locally stored active operation
