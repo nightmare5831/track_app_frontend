@@ -114,6 +114,20 @@ const Request = {
       return { error: error.message || 'Network request failed' };
     }
   },
+
+  async GetRaw(url: string) {
+    try {
+      const headers = await getHeaders();
+      const response = await fetchWithTimeout(`${API_BASE_URL}${url}`, {
+        method: 'GET',
+        headers,
+      });
+      return response;
+    } catch (error: any) {
+      console.error('GetRaw request failed:', error);
+      throw error;
+    }
+  },
 };
 
 export default Request;

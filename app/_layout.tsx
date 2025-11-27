@@ -50,6 +50,7 @@ export default function RootLayout() {
         <Stack.Screen name="register" />
         <Stack.Screen name="equipment" />
         <Stack.Screen name="operation" />
+        <Stack.Screen name="reports" />
       </Stack>
     </>
   );

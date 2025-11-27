@@ -38,6 +38,7 @@ export default function AdminScreen() {
   const logout = useAppStore((state) => state.logout);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [operators, setOperators] = useState<OperatorStatus[]>([]);
+  const [performance, setPerformance] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -53,9 +54,10 @@ export default function AdminScreen() {
 
   const fetchData = async () => {
     try {
-      const [statsRes, operatorsRes] = await Promise.all([
+      const [statsRes, operatorsRes, perfRes] = await Promise.all([
         Request.Get('/admin/dashboard'),
-        Request.Get('/admin/operators/status')
+        Request.Get('/admin/operators/status'),
+        Request.Get('/reports/performance')
       ]);
 
       if (statsRes.success) {
@@ -64,6 +66,10 @@ export default function AdminScreen() {
 
       if (operatorsRes.success) {
         setOperators(operatorsRes.data);
+      }
+
+      if (perfRes.success) {
+        setPerformance(perfRes.data);
       }
     } catch (error) {
       console.error('Error fetching admin data:', error);
@@ -142,6 +148,15 @@ export default function AdminScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <View style={styles.content}>
+          {/* Reports Button */}
+          <TouchableOpacity
+            onPress={() => router.push('/reports')}
+            style={styles.reportsButton}
+          >
+            <Ionicons name="bar-chart-outline" size={20} color="#ffffff" />
+            <Text style={styles.reportsButtonText}>View Reports</Text>
+          </TouchableOpacity>
+
           {/* Statistics Cards */}
           <View style={styles.statsGrid}>
             <View style={styles.statCardWrapper}>
@@ -258,6 +273,28 @@ export default function AdminScreen() {
               <Text style={styles.emptyStateText}>No operators found</Text>
             </View>
           )}
+
+          {/* Performance Summary */}
+          {performance && performance.totalOperations > 0 && (
+            <>
+              <Text style={styles.sectionTitle}>Performance Summary</Text>
+              <Card variant="flat" padding="md">
+                <Text style={styles.performanceLabel}>Total Operations: {performance.totalOperations}</Text>
+
+                {Object.keys(performance.tripsByEquipment || {}).length > 0 && (
+                  <>
+                    <Text style={styles.performanceSubtitle}>Trips by Equipment</Text>
+                    {Object.entries(performance.tripsByEquipment).slice(0, 5).map(([equip, count]: [string, any]) => (
+                      <View key={equip} style={styles.performanceRow}>
+                        <Text style={styles.performanceEquip}>{equip}</Text>
+                        <Text style={styles.performanceValue}>{count}</Text>
+                      </View>
+                    ))}
+                  </>
+                )}
+              </Card>
+            </>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -333,6 +370,22 @@ const styles = StyleSheet.create({
   content: {
     padding: theme.spacing.md,
     gap: theme.spacing.md,
+  },
+  reportsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.sm,
+    gap: theme.spacing.sm,
+  },
+  reportsButtonText: {
+    color: '#ffffff',
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -467,5 +520,32 @@ const styles = StyleSheet.create({
     fontWeight: theme.fontWeight.semibold,
     color: theme.colors.textSecondary,
     marginTop: theme.spacing.md,
+  },
+  performanceLabel: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.sm,
+  },
+  performanceSubtitle: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.textSecondary,
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.xs,
+  },
+  performanceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: theme.spacing.xs,
+  },
+  performanceEquip: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text,
+  },
+  performanceValue: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.primary,
   },
 });
