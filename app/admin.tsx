@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, SafeAreaView, TouchableOpacity, Alert, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, SafeAreaView, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '../store/useAppStore';
@@ -39,13 +39,11 @@ export default function AdminScreen() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [operators, setOperators] = useState<OperatorStatus[]>([]);
   const [performance, setPerformance] = useState<any>(null);
-  const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is admin
-    if (user?.role !== 'administrator') {
-      Alert.alert('Access Denied', 'You need administrator privileges to access this page.');
+    if (!user) return;
+    if (user.role !== 'administrator') {
       router.replace('/');
       return;
     }
@@ -76,12 +74,10 @@ export default function AdminScreen() {
       Alert.alert('Error', 'Failed to load admin data');
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
   const onRefresh = () => {
-    setRefreshing(true);
     fetchData();
   };
 
@@ -143,10 +139,7 @@ export default function AdminScreen() {
         </View>
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-      >
+      <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
           {/* Reports Button */}
           <TouchableOpacity

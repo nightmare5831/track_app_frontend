@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, SafeAreaView, TouchableOpacity, Alert, StyleSheet, TextInput } from 'react-native';
+import { View, Text, ScrollView, SafeAreaView, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '../store/useAppStore';
@@ -206,7 +206,7 @@ export default function OperationScreen() {
 
   // Show fields based on activityType
   const showTruckField = selectedActivityObj?.activityType === 'loading';
-  const showMaterialField = selectedActivityObj?.activityType === 'loading'; // Only show for loading activities
+  const showMaterialField = selectedActivityObj?.activityType === 'loading' || selectedActivityObj?.activityType === 'transport';
   const showMiningFrontField = selectedActivityObj?.activityType === 'transport';
   const showDestinationField = selectedActivityObj?.activityType === 'transport';
 

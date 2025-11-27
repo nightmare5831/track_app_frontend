@@ -36,11 +36,7 @@ export interface Material {
 export interface Activity {
   _id: string;
   name: string;
-  activityType: 'lunch' | 'dinner' | 'refueling' | 'checklist' | 'transfer' | 'maintenance' |
-    'service' | 'training_dds' | 'operating_other_machine' | 'machine_change' |
-    'bench_relocation' | 'stopped' | 'waiting' |
-    'loading' | 'loading_truck' |
-    'load' | 'trip_to_destination' | 'unload' | 'return';
+  activityType: 'loading' | 'transport' | 'general';
   activityDetails?: {
     stopped_reason: string[];
     waiting_reason: string[];

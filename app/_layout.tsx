@@ -19,20 +19,15 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (!isAuthenticated && segments[0] !== 'login' && segments[0] !== 'register') {
-      // Redirect to login if not authenticated
       router.replace('/login');
-    } else if (isAuthenticated) {
-      // Admin should always be on admin dashboard
-      if (user?.role === 'administrator' && segments[0] !== 'admin') {
+    } else if (isAuthenticated && user) {
+      // Admin should go to admin dashboard
+      if (user.role === 'administrator' && segments[0] !== 'admin' && segments[0] !== 'reports') {
         router.replace('/admin');
       }
-      // Redirect from login/register to appropriate home
-      else if (segments[0] === 'login' || segments[0] === 'register') {
-        if (user?.role === 'administrator') {
-          router.replace('/admin');
-        } else {
-          router.replace('/');
-        }
+      // Operator should go to home (not admin pages)
+      else if (user.role !== 'administrator' && (segments[0] === 'admin' || segments[0] === 'login' || segments[0] === 'register')) {
+        router.replace('/');
       }
     }
   }, [isAuthenticated, segments, user]);

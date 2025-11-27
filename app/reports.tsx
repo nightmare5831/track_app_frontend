@@ -3,7 +3,7 @@ import { View, Text, ScrollView, SafeAreaView, TouchableOpacity, Alert, Activity
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Request from '../lib/request';
-import { Card, Badge } from '../components/ui';
+import { Card } from '../components/ui';
 import { theme } from '../theme';
 import * as Sharing from 'expo-sharing';
 import * as FileSystem from 'expo-file-system';
@@ -37,6 +37,17 @@ export default function ReportsScreen() {
     }
   };
 
+  const changeDate = (days: number) => {
+    const current = new Date(selectedDate);
+    current.setDate(current.getDate() + days);
+    setSelectedDate(current.toISOString().split('T')[0]);
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
   const exportToExcel = async () => {
     try {
       Alert.alert('Export', 'Preparing Excel file...');
@@ -51,7 +62,6 @@ export default function ReportsScreen() {
       const fileName = `operations-report-${Date.now()}.xlsx`;
       const fileUri = FileSystem.documentDirectory + fileName;
 
-      // Convert blob to base64
       const reader = new FileReader();
       reader.readAsDataURL(blob);
       reader.onloadend = async () => {
@@ -86,54 +96,60 @@ export default function ReportsScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="bg-white border-b border-gray-200 px-4 py-3">
+      <View className="bg-white border-b border-gray-200 px-4 py-3 pt-10">
         <View className="flex-row items-center justify-between">
-          <TouchableOpacity onPress={() => router.back()} className="mr-3">
+          <TouchableOpacity onPress={() => router.push('/admin')} className="mr-3">
             <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
           </TouchableOpacity>
           <Text className="text-xl font-bold flex-1">Reports</Text>
-          <TouchableOpacity onPress={exportToExcel} className="bg-green-500 px-3 py-2 rounded-lg flex-row items-center">
-            <Ionicons name="download-outline" size={16} color="white" />
-            <Text className="text-white ml-1 font-semibold text-xs">Excel</Text>
+          <TouchableOpacity onPress={exportToExcel} className="bg-green-600 px-4 py-3 rounded-xl flex-row items-center shadow-sm">
+            <Ionicons name="document-text-outline" size={20} color="white" />
+            <Text className="text-white ml-2 font-bold text-sm">Export</Text>
           </TouchableOpacity>
         </View>
       </View>
 
       <ScrollView className="flex-1 p-4">
         {/* Date Selector */}
-        <Card className="mb-4">
+        <Card variant="flat">
           <Text className="text-sm font-semibold text-gray-600 mb-2">Select Date</Text>
-          <Text className="text-lg font-bold">{selectedDate}</Text>
+          <View className="flex-row items-center justify-between">
+            <TouchableOpacity onPress={() => changeDate(-1)} className="p-2 bg-gray-200 rounded-lg">
+              <Ionicons name="chevron-back" size={24} color={theme.colors.text} />
+            </TouchableOpacity>
+            <Text className="text-lg font-bold">{formatDate(selectedDate)}</Text>
+            <TouchableOpacity onPress={() => changeDate(1)} className="p-2 bg-gray-200 rounded-lg">
+              <Ionicons name="chevron-forward" size={24} color={theme.colors.text} />
+            </TouchableOpacity>
+          </View>
         </Card>
 
         {/* Daily Summary */}
         {dailyReport && (
-          <Card className="mb-4">
+          <Card variant="flat">
             <Text className="text-lg font-bold mb-3">Daily Summary</Text>
-            <View className="space-y-2">
-              <View className="flex-row justify-between py-2 border-b border-gray-100">
-                <Text className="text-gray-600">Total Operations</Text>
-                <Text className="font-bold">{dailyReport.summary.totalOperations}</Text>
-              </View>
-              <View className="flex-row justify-between py-2 border-b border-gray-100">
-                <Text className="text-gray-600">Total Trips</Text>
-                <Text className="font-bold">{dailyReport.summary.totalTrips}</Text>
-              </View>
-              <View className="flex-row justify-between py-2 border-b border-gray-100">
-                <Text className="text-gray-600">Total Distance</Text>
-                <Text className="font-bold">{dailyReport.summary.totalDistance} km</Text>
-              </View>
-              <View className="flex-row justify-between py-2">
-                <Text className="text-gray-600">Total Time</Text>
-                <Text className="font-bold">{Math.round(dailyReport.summary.totalTimeMinutes)} min</Text>
-              </View>
+            <View className="flex-row justify-between py-2 border-b border-gray-100">
+              <Text className="text-gray-600">Total Operations</Text>
+              <Text className="font-bold">{dailyReport.summary.totalOperations}</Text>
+            </View>
+            <View className="flex-row justify-between py-2 border-b border-gray-100">
+              <Text className="text-gray-600">Total Trips</Text>
+              <Text className="font-bold">{dailyReport.summary.totalTrips}</Text>
+            </View>
+            <View className="flex-row justify-between py-2 border-b border-gray-100">
+              <Text className="text-gray-600">Total Distance</Text>
+              <Text className="font-bold">{dailyReport.summary.totalDistance} km</Text>
+            </View>
+            <View className="flex-row justify-between py-2">
+              <Text className="text-gray-600">Total Time</Text>
+              <Text className="font-bold">{Math.round(dailyReport.summary.totalTimeMinutes)} min</Text>
             </View>
           </Card>
         )}
 
         {/* Time per Activity */}
         {dailyReport?.timePerActivity && Object.keys(dailyReport.timePerActivity).length > 0 && (
-          <Card className="mb-4">
+          <Card variant="flat">
             <Text className="text-lg font-bold mb-3">Time per Activity</Text>
             {Object.entries(dailyReport.timePerActivity).map(([activity, minutes]: [string, any]) => (
               <View key={activity} className="flex-row justify-between py-2 border-b border-gray-100">
@@ -144,41 +160,46 @@ export default function ReportsScreen() {
           </Card>
         )}
 
-        {/* Material Moved */}
-        {dailyReport?.materialMoved && Object.keys(dailyReport.materialMoved).length > 0 && (
-          <Card className="mb-4">
-            <Text className="text-lg font-bold mb-3">Material Moved</Text>
-            {Object.entries(dailyReport.materialMoved).map(([material, count]: [string, any]) => (
-              <View key={material} className="flex-row justify-between py-2 border-b border-gray-100">
-                <Text className="text-gray-700">{material}</Text>
-                <Text className="font-semibold">{count} loads</Text>
-              </View>
-            ))}
-          </Card>
-        )}
-
         {/* Performance Dashboard */}
-        {performance && (
-          <Card className="mb-4">
-            <Text className="text-lg font-bold mb-3">Performance Overview</Text>
+        <Card variant="flat">
+          <Text className="text-lg font-bold mb-3">Performance Overview</Text>
 
-            <Text className="text-sm font-semibold text-gray-600 mb-2 mt-2">Trips by Equipment</Text>
-            {Object.entries(performance.tripsByEquipment || {}).map(([equip, count]: [string, any]) => (
-              <View key={equip} className="flex-row justify-between py-1">
-                <Text className="text-gray-700 text-sm">{equip}</Text>
-                <Text className="font-semibold text-sm">{count}</Text>
-              </View>
-            ))}
+          {performance && (
+            <>
+              <Text className="text-sm font-semibold text-gray-600 mb-2">Trips by Equipment</Text>
+              {Object.entries(performance.tripsByEquipment || {}).map(([equip, count]: [string, any]) => (
+                <View key={equip} className="flex-row justify-between py-1">
+                  <Text className="text-gray-700 text-sm">{equip}</Text>
+                  <Text className="font-semibold text-sm">{count}</Text>
+                </View>
+              ))}
 
-            <Text className="text-sm font-semibold text-gray-600 mb-2 mt-4">Equipment Availability</Text>
-            {Object.entries(performance.availability || {}).map(([equip, percent]: [string, any]) => (
-              <View key={equip} className="flex-row justify-between py-1">
-                <Text className="text-gray-700 text-sm">{equip}</Text>
-                <Text className="font-semibold text-sm">{percent}%</Text>
+              <Text className="text-sm font-semibold text-gray-600 mb-2 mt-4">Equipment Availability</Text>
+              {Object.entries(performance.availability || {}).map(([equip, percent]: [string, any]) => (
+                <View key={equip} className="flex-row justify-between py-1">
+                  <Text className="text-gray-700 text-sm">{equip}</Text>
+                  <Text className="font-semibold text-sm">{percent}%</Text>
+                </View>
+              ))}
+            </>
+          )}
+
+          {/* Material Moved */}
+          <Text className="text-sm font-semibold text-gray-600 mb-2 mt-4">Material Moved</Text>
+          {dailyReport?.materialMoved && dailyReport.materialMoved.length > 0 ? (
+            dailyReport.materialMoved.map((item: any, index: number) => (
+              <View key={index} className="py-2 border-b border-gray-100">
+                <View className="flex-row justify-between">
+                  <Text className="text-gray-700 font-semibold">{item.name}</Text>
+                  <Text className="font-bold text-blue-600">{item.count} loads</Text>
+                </View>
+                <Text className="text-gray-500 text-sm">Destination: {item.destination}</Text>
               </View>
-            ))}
-          </Card>
-        )}
+            ))
+          ) : (
+            <Text className="text-gray-400 text-sm py-2">No material moved</Text>
+          )}
+        </Card>
       </ScrollView>
     </SafeAreaView>
   );
