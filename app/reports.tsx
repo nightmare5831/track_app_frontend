@@ -24,7 +24,7 @@ export default function ReportsScreen() {
     try {
       const [dailyRes, perfRes] = await Promise.all([
         Request.Get(`/reports/daily?date=${selectedDate}`),
-        Request.Get('/reports/performance')
+        Request.Get(`/reports/performance?startDate=${selectedDate}&endDate=${selectedDate}`)
       ]);
 
       if (dailyRes.success) setDailyReport(dailyRes.data);
