@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAppStore } from '../store/useAppStore';
 import Request from '../lib/request';
 import { Card, Badge } from '../components/ui';
+import { LanguageToggle } from '../components/LanguageToggle';
 import { theme } from '../theme';
 
 interface DashboardStats {
@@ -130,6 +131,7 @@ export default function AdminScreen() {
           <Text style={styles.headerSubtitle}>Welcome, {user?.name}</Text>
         </View>
         <View style={styles.headerActions}>
+          <LanguageToggle />
           <TouchableOpacity onPress={onRefresh} style={styles.refreshButton}>
             <Ionicons name="refresh" size={24} color={theme.colors.primary} />
           </TouchableOpacity>
@@ -141,14 +143,39 @@ export default function AdminScreen() {
 
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
-          {/* Reports Button */}
-          <TouchableOpacity
-            onPress={() => router.push('/reports')}
-            style={styles.reportsButton}
-          >
-            <Ionicons name="bar-chart-outline" size={20} color="#ffffff" />
-            <Text style={styles.reportsButtonText}>View Reports</Text>
-          </TouchableOpacity>
+          {/* Management Buttons */}
+          <View style={styles.managementButtons}>
+            <TouchableOpacity
+              onPress={() => router.push('/admin/equipment')}
+              style={styles.managementButton}
+            >
+              <Ionicons name="construct-outline" size={20} color="#ffffff" />
+              <Text style={styles.managementButtonText}>Equipment</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push('/admin/operators')}
+              style={styles.managementButton}
+            >
+              <Ionicons name="people-outline" size={20} color="#ffffff" />
+              <Text style={styles.managementButtonText}>Operators</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.managementButtons}>
+            <TouchableOpacity
+              onPress={() => router.push('/admin/activities')}
+              style={styles.managementButton}
+            >
+              <Ionicons name="list-outline" size={20} color="#ffffff" />
+              <Text style={styles.managementButtonText}>Activities</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => router.push('/reports')}
+              style={styles.managementButton}
+            >
+              <Ionicons name="bar-chart-outline" size={20} color="#ffffff" />
+              <Text style={styles.managementButtonText}>Reports</Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Statistics Cards */}
           <View style={styles.statsGrid}>
@@ -364,20 +391,24 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     gap: theme.spacing.md,
   },
-  reportsButton: {
+  managementButtons: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+  },
+  managementButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: theme.colors.primary,
     paddingVertical: theme.spacing.md,
-    paddingHorizontal: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.sm,
     borderRadius: theme.borderRadius.md,
-    marginBottom: theme.spacing.sm,
-    gap: theme.spacing.sm,
+    gap: theme.spacing.xs,
   },
-  reportsButtonText: {
+  managementButtonText: {
     color: '#ffffff',
-    fontSize: theme.fontSize.md,
+    fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.semibold,
   },
   statsGrid: {

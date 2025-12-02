@@ -8,6 +8,7 @@ import { useAppStore } from '../store/useAppStore';
 import Request from '../lib/request';
 import syncService from '../lib/syncService';
 import { Card, Badge } from '../components/ui';
+import { LanguageToggle } from '../components/LanguageToggle';
 import { theme } from '../theme';
 import { Activity, User as UserType, Material, Operation, Equipment } from '../types';
 
@@ -206,58 +207,117 @@ export default function Home() {
     );
   };
 
-  const handleEditOperation = (operation: Operation) => {
-    Alert.alert('Edit Operation', 'Edit functionality coming soon');
-    // TODO: Navigate to edit screen or show edit modal
+  const handleEditOperation = async (operation: Operation) => {
+    const operationId = operation._id;
+    if (!operationId) return;
+
+    // Get current values
+    const currentDetails = operation.activityDetails || '';
+
+    Alert.prompt(
+      'Edit Operation',
+      'Update operation details:',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Save',
+          onPress: async (newDetails) => {
+            try {
+              const response = await Request.Put(`/operations/${operationId}`, {
+                activityDetails: newDetails
+              });
+
+              if (response.success) {
+                Alert.alert('Success', 'Operation updated successfully');
+                fetchData();
+              }
+            } catch (error) {
+              console.error('Error updating operation:', error);
+              Alert.alert('Error', 'Failed to update operation');
+            }
+          }
+        }
+      ],
+      'plain-text',
+      currentDetails
+    );
   };
 
-  // Group stopped operations by equipment+activity+material and hide those with active counterparts
+  // Group stopped operations by date, then by equipment+activity+material
   const getGroupedStoppedOperations = () => {
-    // First, group all stopped operations
-    const groups = new Map<string, Operation[]>();
+    // Group by date first
+    const byDate = new Map<string, Operation[]>();
 
     stoppedOperations.forEach(op => {
-      const equipmentId = typeof op.equipment === 'string' ? op.equipment : op.equipment?._id;
-      const activityId = typeof op.activity === 'string' ? op.activity : op.activity?._id;
-      const materialId = op.material ? (typeof op.material === 'string' ? op.material : op.material?._id) : null;
-
-      if (!equipmentId || !activityId) return;
-
-      const key = `${equipmentId}_${activityId}_${materialId || 'none'}`;
-
-      if (!groups.has(key)) {
-        groups.set(key, []);
+      if (!op.endTime) return;
+      const date = new Date(op.endTime).toDateString();
+      if (!byDate.has(date)) {
+        byDate.set(date, []);
       }
-      groups.get(key)!.push(op);
+      byDate.get(date)!.push(op);
     });
 
-    // Filter out groups that have an active counterpart
-    const filteredGroups: Operation[][] = [];
+    // Sort dates descending (most recent first)
+    const sortedDates = Array.from(byDate.keys()).sort((a, b) =>
+      new Date(b).getTime() - new Date(a).getTime()
+    );
 
-    groups.forEach((operations, key) => {
-      const firstOp = operations[0];
-      const equipmentId = typeof firstOp.equipment === 'string' ? firstOp.equipment : firstOp.equipment?._id;
-      const activityId = typeof firstOp.activity === 'string' ? firstOp.activity : firstOp.activity?._id;
-      const materialId = firstOp.material ? (typeof firstOp.material === 'string' ? firstOp.material : firstOp.material?._id) : null;
+    const result: { date: string; groups: Operation[][] }[] = [];
 
-      // Check if there's an active operation with the same combination
-      const hasActiveCounterpart = activeOperations.some(activeOp => {
-        const activeEquipmentId = typeof activeOp.operation.equipment === 'string' ? activeOp.operation.equipment : activeOp.operation.equipment?._id;
-        const activeActivityId = typeof activeOp.operation.activity === 'string' ? activeOp.operation.activity : activeOp.operation.activity?._id;
-        const activeMaterialId = activeOp.operation.material ? (typeof activeOp.operation.material === 'string' ? activeOp.operation.material : activeOp.operation.material?._id) : null;
+    sortedDates.forEach(dateStr => {
+      const opsForDate = byDate.get(dateStr) || [];
 
-        return activeEquipmentId === equipmentId &&
-               activeActivityId === activityId &&
-               activeMaterialId === materialId;
+      // Group operations for this date by equipment+activity+material
+      const groups = new Map<string, Operation[]>();
+
+      opsForDate.forEach(op => {
+        const equipmentId = typeof op.equipment === 'string' ? op.equipment : op.equipment?._id;
+        const activityId = typeof op.activity === 'string' ? op.activity : op.activity?._id;
+        const materialId = op.material ? (typeof op.material === 'string' ? op.material : op.material?._id) : null;
+
+        if (!equipmentId || !activityId) return;
+
+        const key = `${equipmentId}_${activityId}_${materialId || 'none'}`;
+
+        if (!groups.has(key)) {
+          groups.set(key, []);
+        }
+        groups.get(key)!.push(op);
       });
 
-      // Only include if there's no active counterpart
-      if (!hasActiveCounterpart) {
-        filteredGroups.push(operations);
+      // Filter out groups with active counterparts
+      const filteredGroups: Operation[][] = [];
+
+      groups.forEach((operations) => {
+        const firstOp = operations[0];
+        const equipmentId = typeof firstOp.equipment === 'string' ? firstOp.equipment : firstOp.equipment?._id;
+        const activityId = typeof firstOp.activity === 'string' ? firstOp.activity : firstOp.activity?._id;
+        const materialId = firstOp.material ? (typeof firstOp.material === 'string' ? firstOp.material : firstOp.material?._id) : null;
+
+        const hasActiveCounterpart = activeOperations.some(activeOp => {
+          const activeEquipmentId = typeof activeOp.operation.equipment === 'string' ? activeOp.operation.equipment : activeOp.operation.equipment?._id;
+          const activeActivityId = typeof activeOp.operation.activity === 'string' ? activeOp.operation.activity : activeOp.operation.activity?._id;
+          const activeMaterialId = activeOp.operation.material ? (typeof activeOp.operation.material === 'string' ? activeOp.operation.material : activeOp.operation.material?._id) : null;
+
+          return activeEquipmentId === equipmentId &&
+                 activeActivityId === activityId &&
+                 activeMaterialId === materialId;
+        });
+
+        if (!hasActiveCounterpart) {
+          filteredGroups.push(operations);
+        }
+      });
+
+      if (filteredGroups.length > 0) {
+        result.push({ date: dateStr, groups: filteredGroups });
       }
     });
 
-    return filteredGroups;
+    return result;
   };
 
   const handleCreateSameOperation = async (operation: Operation) => {
@@ -365,6 +425,7 @@ export default function Home() {
               {user && <Text style={styles.headerSubtitle}>Welcome, {user.name}</Text>}
             </View>
             <View style={styles.headerActions}>
+              <LanguageToggle />
               {user?.role === 'administrator' && (
                 <TouchableOpacity style={styles.adminButton} onPress={() => router.push('/admin')}>
                   <Ionicons name="stats-chart" size={24} color={theme.colors.primary} />
@@ -394,6 +455,8 @@ export default function Home() {
                 const operator = users.find(u => u._id === operatorId);
                 const materialId = typeof activeOp.operation.material === 'string' ? activeOp.operation.material : (activeOp.operation.material as any)?._id;
                 const material = materialId ? materials.find(m => m._id === materialId) : null;
+                const truck = activeOp.operation.truckBeingLoaded ? (typeof activeOp.operation.truckBeingLoaded === 'object' ? activeOp.operation.truckBeingLoaded : null) : null;
+                const isLoadingActivity = activeOp.equipment.category === 'loading';
                 // Use local repeatCount from activeOp (includes database count + local increments)
                 const totalCount = getOperationRepetitionCount(activeOp.operation) + (activeOp.repeatCount || 1);
 
@@ -425,6 +488,12 @@ export default function Home() {
                         <Text style={styles.operationOperator}>{operator?.name || 'Operator'}</Text>
                         <View style={styles.operationActivityRow}>
                           <Text style={styles.operationActivity}>{activity?.name || 'Activity'}</Text>
+                          {isLoadingActivity && truck && (truck as any)?.name && (
+                            <>
+                              <Text style={styles.operationSeparator}> • </Text>
+                              <Text style={styles.operationTruck}>→ {(truck as any).name}</Text>
+                            </>
+                          )}
                           {material && (
                             <>
                               <Text style={styles.operationSeparator}> • </Text>
@@ -471,10 +540,12 @@ export default function Home() {
             <>
               <View style={[styles.sectionHeader, { marginTop: activeOperations.length > 0 ? theme.spacing.lg : 0 }]}>
                 <Text style={styles.sectionTitle}>Recent Activities</Text>
-                <Badge label={getGroupedStoppedOperations().length.toString()} variant="neutral" size="sm" />
               </View>
 
-              {getGroupedStoppedOperations().map((operationGroup: Operation[], index: number) => {
+              {getGroupedStoppedOperations().map((dateSection, dateIndex: number) => (
+                <View key={`date-${dateIndex}`}>
+                  <Text style={styles.dateHeader}>{dateSection.date}</Text>
+                  {dateSection.groups.map((operationGroup: Operation[], index: number) => {
                 // Use the first operation in the group as representative
                 const operation = operationGroup[0];
                 const groupCount = operationGroup.length;
@@ -486,6 +557,11 @@ export default function Home() {
                 const materialId = typeof operation.material === 'string' ? operation.material : (operation.material as any)?._id;
                 const material = materialId ? materials.find(m => m._id === materialId) : null;
                 const equipmentId = typeof operation.equipment === 'string' ? operation.equipment : (operation.equipment as any)?._id;
+
+                // Get truck information for loading operations
+                const truckId = operation.truckBeingLoaded ? (typeof operation.truckBeingLoaded === 'string' ? operation.truckBeingLoaded : (operation.truckBeingLoaded as any)?._id) : null;
+                const truck = truckId ? (typeof operation.truckBeingLoaded === 'object' ? operation.truckBeingLoaded : null) : null;
+                const isLoadingActivity = (operation.equipment as any)?.category === 'loading';
 
                 // Calculate total duration for all operations in the group
                 const totalDuration = operationGroup.reduce((sum, op) => {
@@ -522,6 +598,12 @@ export default function Home() {
                         <Text style={styles.operationOperator}>{operator?.name || user?.name || 'Operator'}</Text>
                         <View style={styles.operationActivityRow}>
                           <Text style={[styles.operationActivity, { color: theme.colors.textSecondary }]}>{activity?.name || 'Activity'}</Text>
+                          {isLoadingActivity && truck && (truck as any)?.name && (
+                            <>
+                              <Text style={styles.operationSeparator}> • </Text>
+                              <Text style={styles.operationTruck}>→ {(truck as any).name}</Text>
+                            </>
+                          )}
                           {material && (
                             <>
                               <Text style={styles.operationSeparator}> • </Text>
@@ -554,6 +636,8 @@ export default function Home() {
                   </Card>
                 );
               })}
+                </View>
+              ))}
             </>
           )}
 
@@ -753,6 +837,19 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.xs,
     color: theme.colors.success,
     fontWeight: theme.fontWeight.medium,
+  },
+  operationTruck: {
+    fontSize: theme.fontSize.xs,
+    color: theme.colors.warning,
+    fontWeight: theme.fontWeight.bold,
+  },
+  dateHeader: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
+    marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.xs,
   },
   operationTime: {
     flexDirection: 'row',

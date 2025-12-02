@@ -3,6 +3,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useAppStore } from '../store/useAppStore';
 import syncService from '../lib/syncService';
+import { LanguageProvider } from '../contexts/LanguageContext';
 import '../global.css';
 
 export default function RootLayout() {
@@ -45,7 +46,7 @@ export default function RootLayout() {
   }, [isAuthenticated, segments, user]);
 
   return (
-    <>
+    <LanguageProvider>
       <StatusBar style="auto" />
       <Stack
         screenOptions={{
@@ -59,7 +60,7 @@ export default function RootLayout() {
         <Stack.Screen name="operation" />
         <Stack.Screen name="reports" />
       </Stack>
-    </>
+    </LanguageProvider>
   );
 }
 
