@@ -45,11 +45,14 @@ const Request = {
         headers,
       });
 
+      const responseData = await response.json();
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Return the error message from the backend if available
+        return { error: responseData.error || `HTTP error! status: ${response.status}` };
       }
 
-      return response.json();
+      return responseData;
     } catch (error: any) {
       console.error('GET request failed:', error);
       return { error: error.message || 'Network request failed' };
@@ -65,11 +68,14 @@ const Request = {
         body: JSON.stringify(data),
       });
 
+      const responseData = await response.json();
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Return the error message from the backend if available
+        return { error: responseData.error || `HTTP error! status: ${response.status}` };
       }
 
-      return response.json();
+      return responseData;
     } catch (error: any) {
       console.error('POST request failed:', error);
       return { error: error.message || 'Network request failed' };
@@ -85,11 +91,14 @@ const Request = {
         body: JSON.stringify(data),
       });
 
+      const responseData = await response.json();
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Return the error message from the backend if available
+        return { error: responseData.error || `HTTP error! status: ${response.status}` };
       }
 
-      return response.json();
+      return responseData;
     } catch (error: any) {
       console.error('PUT request failed:', error);
       return { error: error.message || 'Network request failed' };
@@ -104,11 +113,14 @@ const Request = {
         headers,
       });
 
+      const responseData = await response.json();
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Return the error message from the backend if available
+        return { error: responseData.error || `HTTP error! status: ${response.status}` };
       }
 
-      return response.json();
+      return responseData;
     } catch (error: any) {
       console.error('DELETE request failed:', error);
       return { error: error.message || 'Network request failed' };

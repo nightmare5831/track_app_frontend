@@ -7,5 +7,5 @@ export const API_CONFIG = {
     web: 'https://track-app-backend-flame.vercel.app/api',
     default: 'https://track-app-backend-flame.vercel.app/api',
   }),
-  TIMEOUT: 5000, // Reduced from 10s to 5s for faster failure/retry
+  TIMEOUT: 10000,
 };

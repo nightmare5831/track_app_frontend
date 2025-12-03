@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, SafeAreaView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, SafeAreaView, TouchableOpacity, Alert, ActivityIndicator, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -89,25 +89,27 @@ export default function ReportsScreen() {
 
   if (loading && !dailyReport) {
     return (
-      <SafeAreaView className="flex-1 bg-gray-50 justify-center items-center">
-        <ActivityIndicator size="large" color={theme.colors.primary} />
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+        </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50">
-      <View className="bg-white border-b border-gray-200 px-4 py-3 pt-10">
-        <View className="flex-row items-center justify-between">
-          <TouchableOpacity onPress={() => router.push('/admin')} className="mr-3">
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <TouchableOpacity onPress={() => router.push('/admin')} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
           </TouchableOpacity>
-          <Text className="text-xl font-bold flex-1">Reports</Text>
-          <TouchableOpacity onPress={exportToExcel} className="bg-green-600 px-4 py-3 rounded-xl flex-row items-center shadow-sm">
-            <Ionicons name="document-text-outline" size={20} color="white" />
-            <Text className="text-white ml-2 font-bold text-sm">Export</Text>
-          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Reports</Text>
         </View>
+        <TouchableOpacity onPress={exportToExcel} style={styles.exportButton}>
+          <Ionicons name="document-text-outline" size={20} color="white" />
+          <Text style={styles.exportButtonText}>Export</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView className="flex-1 p-4">
@@ -215,3 +217,58 @@ export default function ReportsScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  headerContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButton: {
+    marginRight: theme.spacing.sm,
+  },
+  headerTitle: {
+    fontSize: theme.fontSize.xl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text,
+  },
+  exportButton: {
+    backgroundColor: '#16a34a',
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  exportButtonText: {
+    color: '#ffffff',
+    marginLeft: theme.spacing.xs,
+    fontWeight: theme.fontWeight.bold,
+    fontSize: theme.fontSize.sm,
+  },
+});
