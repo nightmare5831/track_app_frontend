@@ -248,8 +248,8 @@ export default function EquipmentManagementScreen() {
             </ScrollView>
 
             <View style={styles.modalFooter}>
-              <Button label="Cancel" onPress={() => setModalVisible(false)} variant="secondary" />
-              <Button label="Save" onPress={handleSave} />
+              <Button title="Cancel" onPress={() => setModalVisible(false)} variant="secondary" />
+              <Button title="Save" onPress={handleSave} />
             </View>
           </View>
         </View>
